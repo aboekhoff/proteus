@@ -1,0 +1,16 @@
+{
+  "name": "Proteus",
+  "version": "0.0.1",
+  "author": "Andrew Boekhoff",
+  "description": "ECS Game Engine",
+  "dependencies": {},
+  "devDependencies": {
+    "browserify": "latest",
+    "watchify": "latest",
+    "should": "latest"
+  },
+  "scripts": {
+    "build": "browserify src/proteus.js > dist/proteus.js",
+    "watch": "watchify src/proteus.js -o dist/proteus.js"
+  }
+}
