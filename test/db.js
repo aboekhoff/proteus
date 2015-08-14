@@ -12,9 +12,9 @@ describe('DB', function() {
 
 	describe('DB#create', function() {
 		it('should return entities with incrementing ids', function() {
-			var e1 = db.create('entity', {});
-			var e2 = db.create('entity', {});
-			var e3 = db.create('entity', {});
+			var e1 = db.create('entity', null);
+			var e2 = db.create('entity', null);
+			var e3 = db.create('entity', null);
 			e1.id.should.equal(1);
 			e2.id.should.equal(2);
 			e3.id.should.equal(3);
