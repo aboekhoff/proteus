@@ -79,7 +79,9 @@ describe('Engine', function() {
 
 				var es = engine.getEntitiesFor(system);
 				es.indexOf(e1).should.not.equal(-1);
+				es.indexOf(e2).should.equal(-1);
 				es.indexOf(e3).should.not.equal(-1);
+				es.indexOf(e4).should.equal(-1);
 			})
 		})
 
