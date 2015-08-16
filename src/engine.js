@@ -113,16 +113,18 @@ Engine.prototype.addSystem = function(name, system) {
 // definite optimization opportunities here
 // since engine dependencies can now be complicated
 // defer on trying to filter entities beforehand
-Engine.prototype.getEntitiesFor = function(sys, es) {
-	if (!es) { es = this.db.all('entity'); }
+
+// one possible optimization is to avoid the array
+// allocation and execute each system in the each loop
+Engine.prototype.getEntitiesFor = function(sys) {
+	var engine = this;
 	var res = [];
 	var test = sys.getDependencyTest();
-	for (var i=0, ii=es.length; i<ii; i++) {
-		var e = es[i];
-		if (this.evaluateDependencies(test, e.componentMask)) {
+	this.db.objectPools['entity'].forEach(function(e) {
+		if (engine.evaluateDependencies(test, e.componentMask)) {
 			res.push(e);
 		}
-	}
+	})
 	return res;
 }
 

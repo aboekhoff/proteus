@@ -21,6 +21,12 @@ ObjectPool.prototype.resizePool = function(newSize) {
 
 // public API
 
+ObjectPool.prototype.forEach = function(callback) {
+	for (var i=0, ii=this.marker; i<ii; i++) {
+		callback(this.pool[i]);
+	}
+}
+
 ObjectPool.prototype.toArray = function() {
 	return this.pool.slice(0, this.marker);
 }
