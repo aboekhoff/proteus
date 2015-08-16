@@ -7,19 +7,22 @@ function Engine() {
 	var engine = this;
 	this.db = new DB();
 	this.systems = {};
-	this.masks = {};
+	this.systemList = [];
+	this.componentTypes = {};
+	this.componentTypeList = [];
 	this.componentGroups = {};
 	this.nextMask = 0;
 
-	this.Entity = this.db.addType('entity', {components: {}}, {id: true});
+	this.Entity = this.db.addType('entity', {}, {id: true});
 
 	this.Entity.prototype.destroy = function() {
-		var types = Object.keys(this.components);
+		var entity = this;
 
-		for (var i=0, ii=keys.length; i<ii; i++) {
-			this.removeAll(types[i]);
-		}
+		this.componentMask.eachSetBitIndex(function(i) {
+			entity.removeAll(engine.componentTypeList[i].name);
+		});
 
+		this.componentMask.mutatingReset();
 		engine.db.destroy('entity', this.id);
 
 	}
@@ -30,7 +33,7 @@ function Engine() {
 
 	this.Entity.prototype.add = function(type, params) {
 		params.entityId = this.id;
-		this.components[type] = true;
+		this.componentMask.mutatingSet(engine.componentTypes[type].id);
 		engine.db.create(type, params);
 		return this;
 	}
@@ -46,7 +49,7 @@ function Engine() {
 
 		if (engine.db.hasUniqueIndex(type, 'entityId') ||
 			  engine.db.find(type, 'entityId', this.id).length == 0) {
-			delete this.components[type];
+			this.componentMask.mutatingUnset(engine.componentTypes[type].id);
 		}
 
 	}
@@ -54,7 +57,7 @@ function Engine() {
 	// remove all components of the given type
 
 	this.Entity.prototype.removeAll = function(type) {
-		var res = db.find(type, 'entityId', this.id);
+		var res = engine.db.find(type, 'entityId', this.id);
 
 		if (res instanceof Array) {
 			for (var i=0, ii=res.length; i<ii; i++) {
@@ -64,26 +67,34 @@ function Engine() {
 			engine.db.destroy(type, res.id);
 		}
 
-		delete this.components[type];
+		this.componentMask.mutatingUnset(engine.componentTypes[type].id);
 
 	}
 
 }
 
 Engine.prototype.entity = function() {
-	return this.db.create('entity', null);
+	var entity = this.db.create('entity', null);
+	if (!entity.componentMask) {
+		entity.componentMask = new Bitset();
+	}
+	return entity;
 }
 
 Engine.prototype.entity.find = function(id) {
 	return this.db.find('entity', 'id', id);
 }
 
-Engine.prototype.addComponent = function(name, fields, multiple) {
+Engine.prototype.addComponentType = function(name, fields, multiple) {
 	fields = fields || {};
-	this.masks[name] = new Bitset().set(this.nextMask++);
 	fields.entityId = null;
 	indices = {id: true, entityId: !multiple};
-	this.db.addType(name, fields, indices);
+	var componentType = this.db.addType(name, fields, indices);
+	var componentTypeId = this.nextComponentTypeId++;
+	componentType.id = this.componentTypeList.length;
+	componentType.mask = new Bitset().set(componentType.id);
+	this.componentTypeList.push(componentType);
+	this.componentTypes[name] = componentType;
 	return this; 
 }
 

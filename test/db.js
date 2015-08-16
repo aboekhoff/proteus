@@ -21,14 +21,14 @@ describe('DB', function() {
 		});
 	});
 
-	describe('DB#find', function() {
+	describe('DB#find (by id)', function() {
 		it('should find entities by their unique index', function() {
 			var e1 = db.create('entity', {});
 			db.find('entity', 'id', 1).should.equal(e1);
 		});
 	});
 
-	describe('DB#find', function() {
+	describe('DB#find (by id that does not exist)', function() {
 		it('should return undefined for a unique index that does not exist', function() {
 			var e1 = db.create('entity', {});
 			db.destroy('entity', e1.id);
@@ -36,7 +36,7 @@ describe('DB', function() {
 		});
 	});
 
-	describe('DB#find', function() {
+	describe('DB#find (by id of non-unique index)', function() {
 		it('should return an array of objects by their non-unique index', function() {
 			db.addType('widget', {entityId: null}, {entityId: false});
 			var e1 = db.create('entity', {});
@@ -46,7 +46,7 @@ describe('DB', function() {
 		});
 	});
 
-	describe('DB#find', function() {
+	describe('DB#find (by id of non-unique index that does not exist)', function() {
 		it('should return an empty array for a non-unique index that does not exist', function() {
 			db.addType('widget', {entityId: null}, {entityId: false});
 			var e1 = db.create('entity', {});
