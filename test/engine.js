@@ -56,15 +56,32 @@ describe('Engine', function() {
 		})
 	})
 
-	describe("Engine dependency computation", function() {
+	describe("dependency computation", function() {
+		var engine; 
+
 		beforeEach(function() {
 			engine = new Engine();
 			['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
-			.forEach(function(type) {
-				
-				engine.addComponentType(type);
-			});
+				.forEach(function(type) {
+					engine.addComponentType(type);
+				});
 		});
+
+		describe('Engine#getEntitiesFor', function() {
+			it('should return the list of entities that satisfy the system\'s dependency spec', function() {
+				var system = { dependencies: ['a', 'b'] };
+				engine.addSystem('ab', system);
+
+				var e1 = engine.entity().add('a').add('b');
+				var e2 = engine.entity().add('a');
+				var e3 = engine.entity().add('a').add('b');
+				var e4 = engine.entity().add('b');
+
+				var es = engine.getEntitiesFor(system);
+				es.indexOf(e1).should.not.equal(-1);
+				es.indexOf(e3).should.not.equal(-1);
+			})
+		})
 
 		// describe("Engine#collectEntitiesByDependencies", function() {
 		// 	engine.createComponentGroup('abc', ['a', 'b', 'c']);

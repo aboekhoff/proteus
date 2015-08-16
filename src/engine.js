@@ -11,7 +11,6 @@ function Engine() {
 	this.componentTypes = {};
 	this.componentTypeList = [];
 	this.componentGroups = {};
-	this.nextMask = 0;
 
 	this.Entity = this.db.addType('entity', {}, {id: true});
 
@@ -32,6 +31,7 @@ function Engine() {
 	}
 
 	this.Entity.prototype.add = function(type, params) {
+		params = params || {};
 		params.entityId = this.id;
 		this.componentMask.mutatingSet(engine.componentTypes[type].id);
 		engine.db.create(type, params);
@@ -90,12 +90,40 @@ Engine.prototype.addComponentType = function(name, fields, multiple) {
 	fields.entityId = null;
 	indices = {id: true, entityId: !multiple};
 	var componentType = this.db.addType(name, fields, indices);
-	var componentTypeId = this.nextComponentTypeId++;
 	componentType.id = this.componentTypeList.length;
 	componentType.mask = new Bitset().set(componentType.id);
 	this.componentTypeList.push(componentType);
 	this.componentTypes[name] = componentType;
 	return this; 
+}
+
+Engine.prototype.addSystem = function(name, system) {
+	var engine = this;
+	system.id = this.systemList.length;
+	this.systemList.push(system);
+	this.systems[name] = system;
+	system.getDependencyTest = function() {
+		if (!system.dependencyTest) {
+			system.dependencyTest = engine.normalizeDependencies(system.dependencies || []);
+		}
+		return system.dependencyTest;
+	}
+}
+
+// definite optimization opportunities here
+// since engine dependencies can now be complicated
+// defer on trying to filter entities beforehand
+Engine.prototype.getEntitiesFor = function(sys, es) {
+	if (!es) { es = this.db.all('entity'); }
+	var res = [];
+	var test = sys.getDependencyTest();
+	for (var i=0, ii=es.length; i<ii; i++) {
+		var e = es[i];
+		if (this.evaluateDependencies(test, e.componentMask)) {
+			res.push(e);
+		}
+	}
+	return res;
 }
 
 // mini compiler that does minimal optimization of dependency specs
@@ -114,8 +142,8 @@ Engine.prototype.normalizeDependencies = function(deps) {
 	// first convert to normal form
 	function normalize(x) {
 		if (typeof x == 'string') {
-			var val = engine.masks[x] || engine.componentGroups[x];
-			if (!val) { raiseHell('no component or componentGroup named: ' + x); }
+			var val = engine.componentTypes[x] ? engine.componentTypes[x].mask : engine.componentGroups[x];
+			if (val == null) { raiseHell('no component or componentGroup named: ' + x); }
 			return val;
 		}
 		if (x instanceof Array) {
